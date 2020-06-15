@@ -92,8 +92,8 @@ def train_model(model, Map, dataLoaders, criterion, val_criterion, optimizer,
                     # Sum over one data
                     # Average over different data
                     sum_loss = torch.sum(weight_loss, dim=1)
-                    # avg_loss = torch.mean(sum_loss)
-                    avg_loss = torch.sum(sum_loss)
+                    avg_loss = torch.mean(sum_loss)
+                    # avg_loss = torch.sum(sum_loss)
 
                     # Just for having understanding what is happening
                     train_loss += avg_loss.item()
