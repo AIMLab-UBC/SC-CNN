@@ -47,9 +47,6 @@ You can see the parser arguments with:
 - NVIDIA GPU + CUDA CuDNN
 
 ## Installation
-- Install the required packages
-    - `pip install torch==1.4.0+cu100 torchvision==0.5.0+cu100 -f https://download.pytorch.org/whl/torch_stable.html`
-    - `pip install -r requirements.txt`
 
 - Clone this repo
 ```
@@ -58,6 +55,10 @@ cd cell_detection
 git clone https://github.com/AIMLab-UBC/SC-CNN
 cd SC-CNN
 ```
+
+- Install the required packages
+    - `pip install torch==1.4.0+cu100 torchvision==0.5.0+cu100 -f https://download.pytorch.org/whl/torch_stable.html`
+    - `pip install -r requirements.txt`
 
 ## Contact
 
