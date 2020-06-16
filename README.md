@@ -14,7 +14,7 @@
 
 In this code, we try to implement the [Locality Sensitive Deep Learning for Detection and Classification of Nuclei in Routine Colon Cancer Histology Images](https://ieeexplore.ieee.org/document/7399414).
 
-For this phase, the first part `SC-CNN` is implemented.
+Note: We are updating the codes. It is not complete, and for this phase, the first part `SC-CNN` is implemented.
 
 ### Dataset
 
@@ -34,7 +34,12 @@ You can run it on multiple GPUs too, but you have to determine this in `--gpu` w
 At first, the dataset, which is described in this [part](#dataset), is downloaded. 
 The origin coordinates of centers are in .mat files. Since we want to use it for multiple datasets, coordinates are re-written in .txt files.
 
-Then the dataset is feeded into the network for training.
+Then the H-channel is extracted using `Vahadane` color normalization method. It is implemented based on the [Matlab version](https://github.com/abhishekvahadane/CodeRelease_ColorNormalization).
+
+<img src="Images/img1.png" height=450 alt="Angular"/> <img src="Images/img1_H_channel.png" height=450 alt="Angular"/>
+The left one is original image, and the right one is after H-channel of the original image.
+
+The patches are extracted from H-channel and feeded to the network.
 
 You can see the parser arguments with:
 
