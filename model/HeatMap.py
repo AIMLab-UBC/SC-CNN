@@ -34,10 +34,10 @@ class HeatMap(torch.autograd.Function):
         batch_size = heat_map.shape[0]
         H, W = out_size[0], out_size[1]
         temp = torch.pow(heat_map, 2) / h_value.view(batch_size, 1, 1)
-        # print(heat_map[0, 2:6, 2:6])
+        
         # replace Nan with zero
         temp[temp != temp] = 0
-        # print('temp:', temp)
+        
         coords = torch.tensor([[h, w] for h in range(H) for w in range(W)], device=device)
 
         x = coords[:, 0]; y = coords[:, 1]
