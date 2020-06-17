@@ -18,14 +18,14 @@ Note: We are updating the codes. It is not complete, and for this phase, the fir
 
 ### Dataset
 
-The data for this code, is same as the dataset which is mentioned in the [paper](https://ieeexplore.ieee.org/document/7399414). 
+The data for this code is same as the dataset which is mentioned in the [paper](https://ieeexplore.ieee.org/document/7399414). 
 There are other datasets which can be used to train the model too. We will update the code for that concern, but for now we are just using the main dataset.
 
 Note: There is no need to download the data. Everything is handled by codes.
 
 ### Code
 
-The code is written in `Pytorch`. It is compatible with running on CPU or GPU.
+The code is written using `Pytorch`. It is compatible with running on CPU or GPU.
 
 You can run it on multiple GPUs too, but you have to determine this in `--gpu` when you want to run the file. See the [training](#training) for more info.
 
