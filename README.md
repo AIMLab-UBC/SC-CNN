@@ -45,6 +45,10 @@ You can see the parser arguments with:
 
 `python /path/to/main.py -h`
 
+The structure of model is written is 3 versions. 
+In version `0`, which is the same as one in the paper, takes the gray image of H-channel as input. In version `1`, the only difference with the version 0 is that it takes the RGB image of H-channel as input. 
+The version `2` is completely different. The input has 4 channels which consists of gray image of H-channel + RGB image of H&E slides. Also, in this version, all the layers are convolutional ones.
+
 ## Prerequisites
 - Linux or macOS
 - Python 3.7
