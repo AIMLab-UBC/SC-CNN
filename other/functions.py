@@ -7,33 +7,15 @@ import other.utils as utils
 
 def train_model(model, Map, dataLoaders, criterion, val_criterion, optimizer,
                 scheduler, num_epochs, d, out_size, save_name, load_flag,
-                load_name):
+                load_name, version):
 
 
     since = time.time()
     device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
 
     # load model
-    if load_flag:
-        if torch.cuda.is_available():
-            checkpoint = torch.load(load_name)
-
-        else:
-            checkpoint = torch.load(load_name, map_location='cpu')
-
-        model.load_state_dict(checkpoint['model_state_dict'])
-        optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
-        scheduler.load_state_dict(checkpoint['scheduler_state_dict'])
-        start_epoch = checkpoint['epoch'] + 1
-        best_loss   = checkpoint['loss']
-
-        print('Model Loaded!')
-
-    else:
-        best_loss   = 10**10
-        start_epoch = 0
-
-    best_model_wts = model.state_dict()
+    start_epoch, best_loss, model, optimizer, scheduler = utils.load_model(load_flag, load_name,
+                                                                           model, optimizer, scheduler)
 
     for epoch in range(start_epoch, num_epochs):
 
@@ -63,7 +45,7 @@ def train_model(model, Map, dataLoaders, criterion, val_criterion, optimizer,
                 points, h_value = model(inputs)
 
                 ############################    Auto Grad by me   #######################################
-                predicted = Map(points, h_value, device, d, out_size)
+                predicted = Map(points, h_value, device, d, out_size, version)
 
                 ############################ Auto Grad by Pytorch #######################################
                 # predicted = utils.heat_map_tensor(points, h_value, device, d, out_size)
@@ -92,8 +74,8 @@ def train_model(model, Map, dataLoaders, criterion, val_criterion, optimizer,
                     # Sum over one data
                     # Average over different data
                     sum_loss = torch.sum(weight_loss, dim=1)
-                    avg_loss = torch.mean(sum_loss)
-                    # avg_loss = torch.sum(sum_loss)
+                    # avg_loss = torch.mean(sum_loss)
+                    avg_loss = torch.sum(sum_loss)
 
                     # Just for having understanding what is happening
                     train_loss += avg_loss.item()
@@ -126,25 +108,9 @@ def train_model(model, Map, dataLoaders, criterion, val_criterion, optimizer,
         if val_loss < best_loss:
 
             best_loss = val_loss
-            best_model_wts = model.state_dict()
-
-            # IF using Multiple GPUs, the model should be saved in this way
-            if torch.cuda.device_count() > 1:
-                torch.save(model.module.state_dict(), save_name)
-            else:
-                torch.save(model.state_dict(), save_name)
-
-            torch.save({'epoch'  : epoch,
-                        'model_state_dict'    : model.state_dict(),
-                        'optimizer_state_dict': optimizer.state_dict(),
-                        'scheduler_state_dict': scheduler.state_dict(),
-                        'loss'                : val_loss
-                        }, save_name)
-
-            print('**********************************')
-            print('* Finding Better Model --> Save  *')
-            print('**********************************')
-            print()
+            # Save the best model
+            utils.save_model(epoch, model, optimizer, scheduler, val_loss,
+                             save_name)
 
 
         print('Training Loss is:', train_loss, ' and Validation Loss is:', val_loss)
@@ -155,8 +121,3 @@ def train_model(model, Map, dataLoaders, criterion, val_criterion, optimizer,
     print('Training complete in {:.0f}m {:.0f}s'.format(
            time_elapsed // 60, time_elapsed % 60))
     print('Best loss: {:4f}'.format(best_loss))
-
-    # load best model weights
-    model.load_state_dict(best_model_wts)
-
-    return model
