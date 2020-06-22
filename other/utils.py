@@ -530,16 +530,19 @@ def load_model(load_flag, load_path, model, optimizer, scheduler):
             if name!='module.':
                 flag=False
 
-        if flag:
+        if flag and torch.cuda.device_count() <= 1:
             for k, v in checkpoint['model_state_dict'].items():
                 name = k[7:] # remove 'module.' of dataparallel
-                loaded_checkpoint[name]=v
+                loaded_checkpoint[name] = v
         else:
             loaded_checkpoint = checkpoint['model_state_dict']
 
         model.load_state_dict(loaded_checkpoint)
-        optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
-        scheduler.load_state_dict(checkpoint['scheduler_state_dict'])
+
+        if optimizer!=None and scheduler!=None:
+            optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
+            scheduler.load_state_dict(checkpoint['scheduler_state_dict'])
+            
         start_epoch = checkpoint['epoch'] + 1
         best_loss   = checkpoint['loss']
 
