@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 
-from model.Layers import conv_pool, fully_connected, S1_layer
+from model.Layers import conv_pool, fully_connected, S1_layer_fc
 
 
 class SC_CNN(nn.Module):
@@ -27,20 +27,30 @@ class SC_CNN(nn.Module):
     Amirali
     '''
 
-    def __init__(self, M, out_size):
+    def __init__(self, M, patch_size, out_size, version):
         super().__init__()
 
-        self.conv_1 = conv_pool(3, 36, conv_kernel_size=4, pool_kernel_size=2)
+        # Gray
+        if version==0:
+            in_channel = 1
+        if version==1:
+            in_channel = 3
+
+        patch_H, patch_W = patch_size[0], patch_size[1]
+        linear_H, linear_W = ((patch_H-3)/2 - 2)/2, ((patch_W-3)/2 - 2)/2
+
+        self.conv_1 = conv_pool(in_channel, 36, conv_kernel_size=4,
+                                pool_kernel_size=2)
         self.conv_2 = conv_pool(36, 48, conv_kernel_size=3, pool_kernel_size=2)
 
-        self.fc_1 = fully_connected(5*5*48, 512, 0.2)
+        self.fc_1 = fully_connected(int(linear_H*linear_W*48), 512, 0.2)
         self.fc_2 = fully_connected(512, 512, 0.2)
 
-        self.S1_point = S1_layer(512, 2*M)
-        self.S1_h = S1_layer(512, M)
+        self.S1_point = S1_layer_fc(512, 2*M)
+        self.S1_h     = S1_layer_fc(512, M)
 
         H_prime, W_prime = out_size[0], out_size[1]
-        self.border_1 = torch.tensor([H_prime-1, W_prime-1])
+        self.border_1    = torch.tensor([H_prime-1, W_prime-1])
 
         ## Initialization
         # Bias
@@ -66,6 +76,7 @@ class SC_CNN(nn.Module):
         x = self.conv_2(x)
 
         x = x.view(x.size(0), -1)
+
         x = self.fc_1(x)
         x = self.fc_2(x)
 
