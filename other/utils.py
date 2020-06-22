@@ -1,8 +1,10 @@
 import os
-import numpy as np
+import cv2
 import torch
+import numpy as np
 import matplotlib.pyplot as plt
-
+from collections import OrderedDict
+from torchvision import transforms
 
 
 def printInformation(dataset, idx):
@@ -35,7 +37,7 @@ def printInformation(dataset, idx):
 
 
 
-def patch_extraction(img, patch, stride):
+def patch_extraction(img, H_Channel, patch, stride, version):
 
     '''
     This function extracts patches from images.
@@ -43,9 +45,11 @@ def patch_extraction(img, patch, stride):
     Input:
           1- img:
                 The img we want to extract patches from that.
-          2- patch:
+          2- H:
+                H-channel
+          3- patch:
                 Size of patches. It should be in this format: [p_h, p_w]
-          3- stride:
+          4- stride:
                 Size of stride. It should be in this format: [s_h, s_w]
 
     Output:
@@ -55,9 +59,13 @@ def patch_extraction(img, patch, stride):
                 coordinates of patches in original image.
     '''
 
+    assert img.shape[0]==H_Channel.shape[0] or img.shape[1]==H_Channel.shape[1], "The Image shape is {} and Gray H-Channel shape is {} which are not same!".format(img.shape, gray_H.shape)
     # gray --> change it to have a channel
     if len(img.shape) < 3:
         img = img.reshape((img.shape[0], img.shape[1], 1))
+
+    gray_H = cv2.cvtColor(H_Channel, cv2.COLOR_BGR2GRAY)
+    gray_H = gray_H.reshape((gray_H.shape[0], gray_H.shape[1], 1))
 
     img_H, img_W, img_C = img.shape[0], img.shape[1], img.shape[2]
     patch_H, patch_W = patch[0], patch[1]
@@ -78,8 +86,15 @@ def patch_extraction(img, patch, stride):
     else:
         padd_W = 0
 
-    padded_img = np.zeros([img_H+padd_H, img_W+padd_W, img_C])
+    # Adding white pixels
+    padded_img = np.ones([img_H+padd_H, img_W+padd_W, img_C])*255
     padded_img[ :img_H, :img_W, :] = img
+
+    padded_gray_H = np.ones([img_H+padd_H, img_W+padd_W, 1])*255
+    padded_gray_H[ :img_H, :img_W, :] = gray_H
+
+    padded_H = np.ones([img_H+padd_H, img_W+padd_W, img_C])*255
+    padded_H[ :img_H, :img_W, :] = H_Channel
 
     samples = list()
     coords = list()
@@ -90,9 +105,18 @@ def patch_extraction(img, patch, stride):
             start_x = i*stride_H ; end_x = start_x + patch_H
             start_y = j*stride_W ; end_y = start_y + patch_W
 
-            crop_image = padded_img[ start_x : end_x, start_y : end_y, :]
+            crop_image  = padded_img[ start_x : end_x, start_y : end_y, :]
+            crop_h_gray = padded_gray_H[ start_x : end_x, start_y : end_y, :]
+            crop_h      = padded_H[ start_x : end_x, start_y : end_y, :]
 
-            samples.append(crop_image.astype(int))
+            if version==0:
+                concat_img = crop_h_gray
+            if version==1:
+                concat_img = crop_h
+            if version==2:
+                concat_img = np.concatenate((crop_h_gray, crop_image), axis=2)
+
+            samples.append(concat_img.astype(int))
             coords.append(np.array([[start_x, start_y],
                                     [end_x, end_y]]))
 
@@ -432,3 +456,134 @@ def delete_file(path, name):
     for file in list(sorted(os.listdir(path))):
         if file == name:
             os.remove(path + '/' + name)
+
+
+def save_model(epoch, model, optimizer, scheduler, val_loss, save_name):
+
+    '''
+    This function saves the model.
+
+    Input:
+          1- epoch:
+                Epoch number.
+          2- model:
+                Model for saving weights.
+          3- optimizer:
+          4- scheduler:
+          5- val_loss:
+                Validation loss at current epoch
+          6- save_name:
+                Name of the file the above values are saved
+
+    '''
+
+    torch.save({'epoch'               : epoch,
+                'model_state_dict'    : model.state_dict(),
+                'optimizer_state_dict': optimizer.state_dict(),
+                'scheduler_state_dict': scheduler.state_dict(),
+                'loss'                : val_loss
+                }, save_name)
+
+    print('**********************************')
+    print('* Finding Better Model --> Save  *')
+    print('**********************************')
+    print()
+
+
+def load_model(load_flag, load_path, model, optimizer, scheduler):
+
+    '''
+    This function loads the previous best model.
+
+    Input:
+          1- load_flag:
+                Flag that determines if we want to load or not.
+          2- model:
+                Basic model.
+          3- load_path:
+                Path of best model.
+
+    Output:
+          1- model:
+                Model with loaded values.
+          2- start_epoch:
+                Epochs number.
+          3- best_loss:
+                Validation loss of previous model.
+    '''
+
+    if load_flag:
+
+        if torch.cuda.is_available():
+            checkpoint = torch.load(load_path)
+
+        else:
+            checkpoint = torch.load(load_path, map_location='cpu')
+
+        # If the model is trained on DataParallel, it has mudole. on Weights
+        # so first check if every weight  has this name, then remove it.
+        flag = True
+        loaded_checkpoint = OrderedDict()
+
+        for k, v in checkpoint['model_state_dict'].items():
+            name = k[:7]
+            if name!='module.':
+                flag=False
+
+        if flag:
+            for k, v in checkpoint['model_state_dict'].items():
+                name = k[7:] # remove 'module.' of dataparallel
+                loaded_checkpoint[name]=v
+        else:
+            loaded_checkpoint = checkpoint['model_state_dict']
+
+        model.load_state_dict(loaded_checkpoint)
+        optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
+        scheduler.load_state_dict(checkpoint['scheduler_state_dict'])
+        start_epoch = checkpoint['epoch'] + 1
+        best_loss   = checkpoint['loss']
+
+        print('Model Loaded!')
+
+    else:
+        best_loss   = 10**10
+        start_epoch = 0
+
+    return start_epoch, best_loss, model, optimizer, scheduler
+
+
+def transform(version):
+
+    '''
+    This function makes the transformations.
+
+    Input:
+          1- version:
+                1: Gray, 2:RGB, 3:Gray+RGB
+    '''
+
+    # Gray H-channel --> 1 channel
+    if version==0:
+        mean = [221.33406856/255]
+        std  = [41.27528366028781/255]
+
+    # H-channel     --> 3 channel
+    if version==1:
+        mean = [ 235.0879146/255, 214.99023836/255, 224.9764618/255]
+        std  = [ 27.183979045443454/255, 46.98090325856224/255,
+                                      37.483731754364285/255]
+
+    # Gray H-channel + img     --> 4 channel
+    if version==2:
+        mean = [221.33406856/255, 218.48473032/255, 179.33441576/255,
+                211.84208792/255]
+        std  = [41.27528366028781/255, 30.930222418160387/255,
+                52.450219105924226/255, 39.74344489164207/255]
+
+    return transforms.Compose([
+        transforms.ToPILImage(),
+        transforms.ToTensor(),
+        # Computed with all the dataset in seperate .py file
+        transforms.Normalize(mean=mean,
+                             std=std)
+    ])
