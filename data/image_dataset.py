@@ -4,7 +4,6 @@ import numpy as np
 
 import torch
 import torch.utils.data
-from torchvision import transforms
 
 from other import utils
 from other.ColorNormalization import steinseperation
@@ -12,30 +11,19 @@ import dataset.config as cfg
 
 os.environ['KMP_DUPLICATE_LIB_OK']='True'
 
-transform = transforms.Compose([
-    transforms.ToPILImage(),
-    transforms.ToTensor(),
-    # Computed with all the dataset in seperate .py file
-    transforms.Normalize(mean = [ 235.0879146/255, 214.99023836/255, 224.9764618/255],
-                         std  = [ 27.183979045443454/255, 46.98090325856224/255,
-                                  37.483731754364285/255])
-])
 
 
 class CenterDataset(object):
 
-    def __init__(self, root, patch_size, stride_size, d, out_size):
+    def __init__(self, root, patch_size, stride_size, d, out_size, version):
 
-        # self.root = root
-        # self.patch_size = patch
-        # self.stride_size = stride
-        # self.d = d
         self.out_size = out_size
+        self.imgs = [] ; self.heat_maps = []; self.epsilons = 0
 
-        self.imgs = []; self.heat_maps = []; self.epsilons = 0
+        self.transform = utils.transform(version)
 
-        Image_path = root + cfg.dataset_path + cfg.image_path
-        Center_path =root + cfg.dataset_path + cfg.center_path
+        Image_path  = root + cfg.dataset_path + cfg.image_path
+        Center_path = root + cfg.dataset_path + cfg.center_path
 
         # MacOS thing :)
         utils.delete_file(Image_path, '.DS_Store')
@@ -64,9 +52,8 @@ class CenterDataset(object):
             _, _, _, stain, _ = steinseperation.stainsep(img, 2, 0.02)
             H_Channel = stain[0]
 
-
-            cropped, coords = utils.patch_extraction(H_Channel, patch_size,
-                                                     stride_size)
+            cropped, coords = utils.patch_extraction(img, H_Channel, patch_size,
+                                                     stride_size, version)
 
             # Reading Centers
             center_txt = open(center_path, "r")
@@ -82,7 +69,7 @@ class CenterDataset(object):
 
             self.imgs.extend(cropped)
             self.heat_maps.extend(h_map)
-            self.epsilons +=  epsilon
+            self.epsilons += epsilon
 
             print(idx+1, 'from', total_num, 'Images are Loaded!' ,
                   sep=' ', end='\r', flush=True)
@@ -96,7 +83,7 @@ class CenterDataset(object):
         epsilon = self.epsilons / (len(self.imgs)*self.out_size[0]*self.out_size[1] - self.epsilons)
 
         # Normalize image
-        img = transform(np.uint8(img))
+        img = self.transform(np.uint8(img))
         img = img.float()
         heat_map = torch.as_tensor(heat_map, dtype=torch.float)
         epsilon = torch.as_tensor(epsilon, dtype=torch.float)
