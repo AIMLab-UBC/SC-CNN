@@ -9,6 +9,10 @@ def parse_input():
                         help="""<Required> Mode should be either train or test
                         !""")
 
+    parser.add_argument('--version', type=int, required=True,
+                        help="""<Required> Mode should be either 1 (original
+                        paper) or !""")
+
     parser.add_argument('--patch_size', nargs='+', type=int, required=True,
                         help="""<Required> Patch Size for cropping original
                         image. In the paper it is suggested to be [27*27]. It
@@ -49,7 +53,7 @@ def parse_input():
     parser.add_argument('--epoch', type=int, default=100, required=False,
                         help="""Epoch Number!""")
 
-    parser.add_argument('--gpu', type=int, default=[0,1], nargs='+', help="""Used
+    parser.add_argument('--gpu', type=int, default=[0], nargs='+', help="""Used
                         gpu""")
 
     parser.add_argument('--save_name', type=str, default='CellPoint.pt', help=""
@@ -64,7 +68,6 @@ def parse_input():
 
     args = parser.parse_args()
 
-    # Set the GPUs we want to train for the system.
     os.environ['CUDA_VISIBLE_DEVICES'] = ','.join(str(x) for x in args.gpu)
 
     return args
