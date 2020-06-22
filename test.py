@@ -13,20 +13,24 @@ from other.ColorNormalization import steinseperation
 
 def print_values(img, model, arg):
 
+    device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
+
     img_transform = utils.transform(arg.version)
     img = img_transform(np.uint8(img))
     img = img.float()
+
+    img = img.to(device)
 
     img = img.unsqueeze(0)
     model.train(False)
 
     point, h = model(img)
-    print('points     :', point.detach().numpy().reshape((-1, 2)))
-    print('H          :', h.detach().numpy().reshape((-1, 1)))
+    print('points     :', point.cpu().detach().numpy().reshape((-1, 2)))
+    print('H          :', h.cpu().detach().numpy().reshape((-1, 1)))
     print(20*'*')
 
     return utils.heat_map_tensor(point.view(-1, 2), h.view(-1, 1),
-                                 torch.device('cpu'), arg.d, arg.heatmap_size)
+                                 device, arg.d, arg.heatmap_size)
 
 
 
@@ -47,6 +51,9 @@ def test(arg):
     _, _, model, _, _ = utils.load_model(arg.load_flag, arg.load_name, model,
                                          None, None)
 
+    device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
+    model.to(device)
+
     image = Image.open(os.path.join(root + '/Datasets/CRCHistoPhenotypes_2016_04_28/Tissue Images/img1.png'))
     data = asarray(image)
 
@@ -65,7 +72,7 @@ def test(arg):
     for img, coord in zip(cropped, coords):
 
         heat_map = print_values(img, model, arg)
-        heatmap  = heat_map.detach().numpy().reshape((H_prime, W_prime))
+        heatmap  = heat_map.cpu().detach().numpy().reshape((H_prime, W_prime))
 
         start_H, end_H, start_W, end_W = utils.find_out_coords(coord, arg.patch_size,
                                                                arg.heatmap_size)
