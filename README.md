@@ -49,7 +49,7 @@ The structure of model is written is 3 versions.
 In version `0`, which is the same as one in the paper, takes the gray image of H-channel as input. In version `1`, the only difference with the version 0 is that it takes the RGB image of H-channel as input. 
 The version `2` is completely different. The input has 4 channels which consists of gray image of H-channel + RGB image of H&E slides. Also, in this version, all the layers are convolutional ones. For training, you can run:
 
-python /path/to/main.py --patch_size PATCH_SIZE --stride_size STRIDE_SIZE --heatmap_size HEATMAP_SIZE --mode train --batch_size BATCH_SIZE --version VERSION_NUMBER --save_name NAME_SAVING
+`python /path/to/main.py --patch_size PATCH_SIZE --stride_size STRIDE_SIZE --heatmap_size HEATMAP_SIZE --mode train --batch_size BATCH_SIZE --version VERSION_NUMBER --save_name NAME_SAVING`
 
 #### Testing
 
