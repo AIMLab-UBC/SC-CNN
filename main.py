@@ -17,22 +17,24 @@ import os
 from other.parser import parse_input
 from dataset.dataset import dataset
 from train import train
-
+from test import test
 
 if __name__ == "__main__":
 
+
     arg = parse_input()
 
+    # Path to this file
+    # -7 is the lenght of the name of the file 'main.py'
+    # to get the folder path
+    file_path = os.path.realpath(__file__)
+   
+    # Download dataset
+    dataset(file_path[:-7])
+
+
     if arg.mode == 'train':
-
-        # Path to this file
-        # -7 is the lenght of the name of the file 'main.py'
-        # to get the folder path
-        file_path = os.path.realpath(__file__)
-        root = file_path[:-7]
-
-        # Download the dataset
-        dataset(root)
-
-        # Training Phase
         train(arg)
+
+    if arg.mode == 'test':
+        test(arg)
