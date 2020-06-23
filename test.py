@@ -48,7 +48,7 @@ def test(arg):
 
 
     # load model
-    _, _, model, _, _ = utils.load_model(arg.load_flag, arg.load_name, model,
+    _, _, model, _, _ = utils.load_model(arg.load_flag, root+arg.load_name, model,
                                          None, None)
 
     device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
