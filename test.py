@@ -47,12 +47,18 @@ def test(arg):
         model = SC_CNN_v2(arg.M, arg.heatmap_size)
 
 
-    # load model
+    device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
+
+    # move model to the right device
+    if torch.cuda.device_count() > 1:
+        print("Let's use", torch.cuda.device_count(), "GPUs!")
+        model = torch.nn.DataParallel(model)
+
+    model.to(device)
+
+     # load model
     _, _, model, _, _ = utils.load_model(arg.load_flag, root+arg.load_name, model,
                                          None, None)
-
-    device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
-    model.to(device)
 
     image = Image.open(os.path.join(root + '/Datasets/CRCHistoPhenotypes_2016_04_28/Tissue Images/img1.png'))
     data = asarray(image)
