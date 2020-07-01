@@ -99,11 +99,13 @@ def train_model(model, Map, dataLoaders, criterion, val_criterion, optimizer,
                     avg_loss.backward()
                     # Update parameters
                     optimizer.step()
-                    scheduler.step()
 
                 # Empty Catch
                 torch.cuda.empty_cache()
-
+        
+        if phase == 'Train':
+                scheduler.step()
+            
         print()
         if val_loss < best_loss:
 
