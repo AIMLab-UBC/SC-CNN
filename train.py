@@ -47,11 +47,11 @@ def train(arg):
 
     # define training and validation data loaders
     train_data_loader = torch.utils.data.DataLoader(
-        dataset, batch_size=arg.batch_size, shuffle=True, num_workers=4
+        dataset_train, batch_size=arg.batch_size, shuffle=True, num_workers=4
         )
 
     valid_data_loader = torch.utils.data.DataLoader(
-        dataset, batch_size=arg.batch_size, shuffle=True, num_workers=4
+        dataset_valid, batch_size=arg.batch_size, shuffle=True, num_workers=4
         )
 
     # data_loader_test = torch.utils.data.DataLoader(
