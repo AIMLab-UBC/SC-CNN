@@ -317,7 +317,7 @@ def heat_map(patch_centers, coords, d, patch_size, out_size):
 
     return maps, epsilon
 
-
+# Cite: https://discuss.pytorch.org/t/efficient-distance-matrix-computation/9065/5
 def euclidean_dist_squared_tensor(data, center):
 
     '''
