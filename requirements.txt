@@ -23,5 +23,5 @@ scipy==1.4.1
 six==1.15.0
 spams==2.6.1
 torchsummary==1.5.1
-urllib3==1.25.9
+urllib3==1.26.5
 zipp==3.1.0
